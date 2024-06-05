@@ -28,12 +28,12 @@ int main() {
     int numberOfThreads {CPUThreadNum};
     assert(numberOfThreads >= 2); // Assert if we have less than 2 threads to run this program
 
-    if (numberOfThreads >= 2) {
+    if (numberOfThreads >= 2) [[likely]]{
         ThreadPool pool(numberOfThreads);
         for (int i = 0; i < numberOfThreads; i++) {
             pool.enqueueTask([i](){ taskSimulator(i);}); // The std::function of void can be any of void type
         }
-    } else {
+    } else [[unlikely]]{
         Logger::INFO("THERE IS NOT ENOUGH CPU THREADS ON THIS DIVICE");
     }
 

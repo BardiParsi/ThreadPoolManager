@@ -1,7 +1,8 @@
 #include "lib/ThreadPool.h"
 
 // Constructor: starts the given number of threads
-ThreadPool::ThreadPool(size_t numThreads) : stop(false) {
+ThreadPool::ThreadPool(size_t numThreads) : threads(), stop(false){
+    threads.reserve(numThreads);
     for (size_t i = 0; i < numThreads; i++) {
         threads.emplace_back(&ThreadPool::activeThread, this);
     }
@@ -11,7 +12,7 @@ ThreadPool::ThreadPool(size_t numThreads) : stop(false) {
 ThreadPool::~ThreadPool() {
     {
         std::unique_lock<std::mutex> lock(queMtx);
-        stop = true;
+        stop.store(true, std::memory_order_release);
         lock.unlock();
     }
     condVar.notify_all();
@@ -37,8 +38,8 @@ void ThreadPool::activeThread() {
         std::shared_ptr<HeavyTask> task;
         {
             std::unique_lock<std::mutex> lock(queMtx);
-            condVar.wait(lock, [this](){ return stop || !tasks.empty(); });
-            if (stop && tasks.empty()) {
+            condVar.wait(lock, [this](){ return stop.load(std::memory_order_acquire) || !tasks.empty(); });
+            if (stop.load(std::memory_order_relaxed) && tasks.empty()) {
                 return;
             }
             task = tasks.front();

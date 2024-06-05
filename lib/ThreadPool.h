@@ -8,6 +8,7 @@
 #include <queue>
 #include <memory>
 #include <functional>
+#include <atomic>
 #include <cassert>
 
 /*
@@ -22,7 +23,7 @@ private:
     std::queue<std::shared_ptr<HeavyTask>> tasks; // Queue of tasks
     std::mutex queMtx; // Mutex for protecting access to the queue
     std::condition_variable_any condVar; // Condition variable for task synchronization
-    bool stop; // Flag to signal stopping of threads
+    std::atomic_bool stop; // Flag to signal stopping of threads
     void activeThread(); // Worker function for each thread in the pool
 
 public:
